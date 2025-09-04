@@ -56,9 +56,8 @@ for n = steps
 
     % Update state
     a_x = F_thrust_x / m;
-
-    x(n) = x0 + v_x0 * dt + 0.5 * a_x * dt * dt;
     v_x(n) = v_x0 + a_x * dt;
+    x(n) = x0 + v_x0 * dt + 0.5 * a_x * dt * dt;
     theta(n) = theta0 + omega_in * dt;
     omega(n) = omega_in;
 end

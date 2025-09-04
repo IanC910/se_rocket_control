@@ -65,10 +65,12 @@ for n = steps
     a_x = F_thrust * sin(theta0) / m;
     a_y = (F_thrust * cos(theta0) - F_g) / m;
 
-    x(n) = x0 + v_x0 * dt + 0.5 * a_x * dt * dt;
-    y(n) = y0 + v_y0 * dt + 0.5 * a_y * dt * dt;
     v_x(n) = v_x0 + a_x * dt;
     v_y(n) = v_y0 + a_y * dt;
+
+    x(n) = x0 + v_x0 * dt + 0.5 * a_x * dt * dt;
+    y(n) = y0 + v_y0 * dt + 0.5 * a_y * dt * dt;
+    
     theta(n) = theta0 + omega_in * dt;
     omega(n) = omega_in;
 end
