@@ -50,7 +50,7 @@ for n = steps
     a_x_in      = -K_a * (v_x0 - v_x_in);
     a_y_in      = -K_a * (v_y0 - v_y_in);
 
-    theta_in    = atan(a_x_in / g);
+    theta_in    = atan(-a_x_in / g);
     theta_in    = min([theta_in, max_theta]);
     theta_in    = max([theta_in, -max_theta]);
 
@@ -62,7 +62,7 @@ for n = steps
     F_thrust = F_thrust_y / cos(theta0);
 
     % Update state
-    a_x = F_thrust * sin(theta0) / m;
+    a_x = F_thrust * -sin(theta0) / m;
     a_y = (F_thrust * cos(theta0) - F_g) / m;
 
     v_x(n) = v_x0 + a_x * dt;

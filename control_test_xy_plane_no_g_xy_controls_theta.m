@@ -31,6 +31,7 @@ x       = Z;
 y       = Z;
 v_x     = Z;
 v_y     = Z;
+a_x     = 0;
 a_y     = -g;
 theta   = Z;
 omega   = Z;
@@ -56,23 +57,26 @@ for n = steps
     a_x_in      = -K_a * (v_x0 - v_x_in);
     a_y_in      = -K_a * (v_y0 - v_y_in);
 
-    theta_in    = atan(a_x_in / g);
+    F_th_x_dot_in   = -K_j * m * (a_x - a_x_in);
+    F_th_y_dot_in   = -K_j * m * (a_y - a_y_in);
+    F_th_x_in       = F_th0 * -sin(theta0) + F_th_x_dot_in * dt;
+    F_th_y_in       = F_th0 * cos(theta0) + F_th_y_dot_in * dt;
+    F_th_y_in       = max([F_th_y_in, 0]);
+
+    F_th_in = sqrt(F_th_x_in * F_th_x_in + F_th_y_in * F_th_y_in);
+    F_th(n) = F_th_in;
+
+    theta_in    = atan2(-F_th_x_in, F_th_y_in);
     theta_in    = min([theta_in, max_theta]);
     theta_in    = max([theta_in, -max_theta]);
 
     omega_in    = -K_omega * (theta0 - theta_in);
     omega_in    = min([omega_in, max_omega]);
     omega_in    = max([omega_in, -max_omega]);
-    
-    F_th_y_dot = -K_j * m * (a_y - a_y_in);
-    F_th_dot = F_th_y_dot / cos(theta0);
-
-    F_th_in = F_th0 + F_th_dot * dt;
-    F_th_in = max([F_th_in, 0]);
-    F_th(n) = F_th_in;
+    omega(n)    = omega_in;
 
     % Update state
-    a_x = F_th_in * sin(theta0) / m;
+    a_x = F_th_in * -sin(theta0) / m;
     a_y = (F_th_in * cos(theta0) - F_g) / m;
 
     v_x(n) = v_x0 + a_x * dt;
@@ -82,37 +86,41 @@ for n = steps
     y(n) = y0 + v_y0 * dt + 0.5 * a_y * dt * dt;
     
     theta(n) = theta0 + omega_in * dt;
-    omega(n) = omega_in;
 end
 
 figure
+tiledlayout(7, 1)
+
+nexttile
 plot(t, x)
 title('x')
 
-figure
+nexttile
 plot(t, y)
 title('y')
+
+nexttile
+plot(t, v_x)
+title('v_x')
+
+nexttile
+plot(t, v_y)
+title('v_y')
+
+nexttile
+plot(t, theta * 180 / pi)
+title('theta in deg')
+
+nexttile
+plot(t, omega * 180 / pi)
+title('omega in deg/s')
+
+nexttile
+plot(t, F_th)
+title('F\_th')
+hold off
+
 
 figure
 plot(x, y)
 title('path')
-
-figure
-plot(t, v_x)
-title('v_x')
-
-figure
-plot(t, v_y)
-title('v_y')
-
-figure
-plot(t, theta * 180 / pi)
-title('theta in deg')
-
-figure
-plot(t, omega * 180 / pi)
-title('omega in deg/s')
-
-figure
-plot(t, F_th)
-title('F\_th')
