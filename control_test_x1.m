@@ -15,8 +15,8 @@ x_r = 10;
 
 % Controller values
 K_v         = 1;
-K_theta     = 2;
-K_omega     = 3;
+K_a         = 2.5;
+K_omega     = 10;
 
 max_theta   = pi / 4;
 max_omega   = 30 / 60 * 2 * pi;
@@ -24,7 +24,7 @@ max_omega   = 30 / 60 * 2 * pi;
 % Initial Conditions
 m = 1;
 x       = zeros(size(steps));
-v_x       = zeros(size(steps));
+v_x     = zeros(size(steps));
 theta   = zeros(size(steps));
 omega   = zeros(size(steps));
 
@@ -39,9 +39,11 @@ for n = steps
     theta0 = theta(p);
 
     % Calculate inputs
-    v_x_in        = -K_v * (x0 - x_r);
+    v_x_in      = -K_v * (x0 - x_r);
 
-    theta_in    = -K_theta * (v_x0 - v_x_in);
+    a_x_in      = -K_a * (v_x0 - v_x_in);
+
+    theta_in    = atan(a_x_in / g);
     theta_in    = min([theta_in, max_theta]);
     theta_in    = max([theta_in, -max_theta]);
 

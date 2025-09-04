@@ -12,11 +12,12 @@ t = steps * dt;
 
 % Desired Conditions
 x_r = 10;
+y_r = 10;
 
 % Controller values
 K_v         = 1;
-K_theta     = 3;
-K_omega     = 5;
+K_a         = 2.5;
+K_omega     = 10;
 
 max_theta   = pi / 4;
 max_omega   = 30 / 60 * 2 * pi;
@@ -44,9 +45,12 @@ for n = steps
 
     % Calculate inputs
     v_x_in      = -K_v * (x0 - x_r);
-    v_x_in      = -K_v * (y0 - y_r);
+    v_y_in      = -K_v * (y0 - y_r);
 
-    theta_in    = -K_theta * (v_x0 - v_x_in);
+    a_x_in      = -K_a * (v_x0 - v_x_in);
+    a_y_in      = -K_a * (v_y0 - v_y_in);
+
+    theta_in    = atan(a_x_in / g);
     theta_in    = min([theta_in, max_theta]);
     theta_in    = max([theta_in, -max_theta]);
 
@@ -54,14 +58,17 @@ for n = steps
     omega_in    = min([omega_in, max_omega]);
     omega_in    = max([omega_in, -max_omega]);
     
-    F_thrust = F_g / cos(theta0);
-    F_thrust_x = F_thrust * sin(theta0);
+    F_thrust_y = m * a_y_in + F_g;
+    F_thrust = F_thrust_y / cos(theta0);
 
     % Update state
-    a = F_thrust_x / m;
+    a_x = F_thrust * sin(theta0) / m;
+    a_y = (F_thrust * cos(theta0) - F_g) / m;
 
-    x(n) = x0 + v_x0 * dt + 0.5 * a * dt * dt;
-    v(n) = v_x0 + a * dt;
+    x(n) = x0 + v_x0 * dt + 0.5 * a_x * dt * dt;
+    y(n) = y0 + v_y0 * dt + 0.5 * a_y * dt * dt;
+    v_x(n) = v_x0 + a_x * dt;
+    v_y(n) = v_y0 + a_y * dt;
     theta(n) = theta0 + omega_in * dt;
     omega(n) = omega_in;
 end
@@ -71,8 +78,16 @@ plot(t, x)
 title('x')
 
 figure
-plot(t, v)
-title('v')
+plot(t, y)
+title('y')
+
+figure
+plot(t, v_x)
+title('v_x')
+
+figure
+plot(t, v_y)
+title('v_y')
 
 figure
 plot(t, theta * 180 / pi)
