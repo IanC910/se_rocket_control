@@ -3,7 +3,7 @@ clear
 close all
 
 g = 9.8;
-sim_time    = 10;
+sim_time    = 20;
 dt          = 0.001;
 
 num_steps   = sim_time / dt;
@@ -12,19 +12,19 @@ t = steps * dt;
 
 % Desired Conditions
 x_r = 10;
-y_r = 10;
+y_r = -100;
 
 % Controller values
-K_v         = 1;
-K_a         = 2.5;
-K_omega     = 10;
-K_F         = 100;
+K_v         = 0.8;
+K_a         = 10;
+K_omega     = 100;
+K_j         = 100;
 
 max_theta   = pi / 4;
 max_omega   = 30 / 60 * 2 * pi;
 
 % Initial Conditions
-m = 1;
+m = 10;
 Z       = zeros(size(steps));
 
 x       = Z;
@@ -64,14 +64,16 @@ for n = steps
     omega_in    = min([omega_in, max_omega]);
     omega_in    = max([omega_in, -max_omega]);
     
-    F_th_y_dot = -K_F * m * (a_y - a_y_in);
+    F_th_y_dot = -K_j * m * (a_y - a_y_in);
     F_th_dot = F_th_y_dot / cos(theta0);
 
-    F_th(n) = F_th0 + F_th_dot * dt;
+    F_th_in = F_th0 + F_th_dot * dt;
+    F_th_in = max([F_th_in, 0]);
+    F_th(n) = F_th_in;
 
     % Update state
-    a_x = F_th0 * sin(theta0) / m;
-    a_y = (F_th0 * cos(theta0) - F_g) / m;
+    a_x = F_th_in * sin(theta0) / m;
+    a_y = (F_th_in * cos(theta0) - F_g) / m;
 
     v_x(n) = v_x0 + a_x * dt;
     v_y(n) = v_y0 + a_y * dt;
@@ -92,6 +94,10 @@ plot(t, y)
 title('y')
 
 figure
+plot(x, y)
+title('path')
+
+figure
 plot(t, v_x)
 title('v_x')
 
@@ -106,3 +112,7 @@ title('theta in deg')
 figure
 plot(t, omega * 180 / pi)
 title('omega in deg/s')
+
+figure
+plot(t, F_th)
+title('F\_th')
