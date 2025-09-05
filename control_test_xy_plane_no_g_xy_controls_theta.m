@@ -2,6 +2,10 @@
 clear
 close all
 
+% Controller doesn't use the constant g (works for any gravity)
+% Desired theta is calculated using the desired thrust vector
+% Desired thrust is calculated from accel. feedback controls
+
 g = 9.8;
 sim_time    = 20;
 dt          = 0.001;
@@ -51,7 +55,7 @@ for n = steps
     F_th0   = F_th(p);
 
     % Control
-    v_x_in      = -K_v * (x0 - x_r);
+    v_x_in      = -K_v * (x0 - x_r); 
     v_y_in      = -K_v * (y0 - y_r);
 
     a_x_in      = -K_a * (v_x0 - v_x_in);

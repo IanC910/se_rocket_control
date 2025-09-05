@@ -12,7 +12,7 @@ t = steps * dt;
 
 % Desired Conditions
 x_r = 10;
-y_r = -100;
+y_r = -1000;
 
 % Controller values
 K_v         = 0.8;
