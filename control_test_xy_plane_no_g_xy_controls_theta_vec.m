@@ -58,6 +58,9 @@ for n = steps
 
     % Control
     v_desired = -K_v * (x0 - x_ref);
+    v_desired_mag = norm(v_desired);
+    v_desired_mag = min(v_desired_mag, 100);
+    v_desired = v_desired_mag * v_desired / norm(v_desired);
 
     a_desired = -K_a * (v0 - v_desired);
 
@@ -76,7 +79,7 @@ for n = steps
     omega_in    = max([omega_in, -max_omega]);
 
     % Update state
-    a(:, n) = (F_thrust_mag_in * dir0 - F_g) / m;
+    a(:, n) = (F_thrust_mag_in * dir0 + F_g) / m;
     v(:, n) = v0 + a(:, n) * dt;
     x(:, n) = x0 + v0 * dt + 0.5 * a(:, n) * dt * dt;
     F_thrust_mag(n) = F_thrust_mag_in;
