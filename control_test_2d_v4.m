@@ -6,6 +6,7 @@ close all
 % Desired theta is calculated using the desired thrust vector
 % Desired thrust is calculated from acceleration feedback controls
 % Thrust input strength is calculated with current angle
+% Velocity is capped
 
 g = 9.8;
 sim_time    = 60;
@@ -73,8 +74,15 @@ for n = steps
     F_thrust_mag_in = min(F_thrust_mag_in, 100);
 
     theta_desired    = atan2(F_thrust_desired(2), F_thrust_desired(1));
+    theta_distance   = theta0 - theta_desired;
+    if(abs(theta_distance + 2 * pi) < abs(theta_distance))
+        theta_distance = theta_distance + 2 * pi;
+    end
+    if(abs(theta_distance - 2 * pi) < abs(theta_distance))
+        theta_distance = theta_distance - 2 * pi;
+    end
 
-    omega_in    = -K_omega * (theta0 - theta_desired);
+    omega_in    = -K_omega * theta_distance;
     omega_in    = min([omega_in, max_omega]);
     omega_in    = max([omega_in, -max_omega]);
 
