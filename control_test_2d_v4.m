@@ -4,8 +4,8 @@ close all
 
 % Controller doesn't use the constant g (works for any gravity)
 % Desired theta is calculated using the desired thrust vector
-% Desired thrust is calculated from accel. feedback controls
-% Do vector wise operations instead of components
+% Desired thrust is calculated from acceleration feedback controls
+% Thrust input strength is calculated with current angle
 
 g = 9.8;
 sim_time    = 60;

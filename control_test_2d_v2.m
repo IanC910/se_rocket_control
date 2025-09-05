@@ -2,6 +2,9 @@
 clear
 close all
 
+% No use of Earth's g constant (dynamically adjusts to whatever gravity strength its in, provided it'd pointing down)
+% Theta controlled by horizontal thrust needs (assumes vertical gravity
+
 g = 9.8;
 sim_time    = 20;
 dt          = 0.001;
