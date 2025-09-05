@@ -16,12 +16,12 @@ t = steps * dt;
 
 % Desired Conditions
 x_r = 10;
-y_r = -100;
+y_r = 100;
 
 % Controller values
 K_v         = 0.8;
 K_a         = 10;
-K_omega     = 100;
+K_omega     = 10;
 K_j         = 100;
 
 max_theta   = pi / 4;
@@ -124,7 +124,10 @@ plot(t, F_th)
 title('F\_th')
 hold off
 
-
 figure
-plot(x, y)
 title('path')
+hold on
+for s = 0 : sim_time - 1
+    plot(x(s/dt + 1: (s + 1)/dt), y(s/dt + 1: (s + 1)/dt))
+end
+hold off
