@@ -8,19 +8,20 @@ close all
 % Do vector wise operations instead of components
 
 g = 9.8;
-sim_time    = 20;
+sim_time    = 10;
 dt          = 0.001;
+do_animation = 1;
 
 num_steps   = sim_time / dt;
 steps = 1 : num_steps;
 t = steps * dt;
 
 % Desired Conditions
-x_ref = [10; -1000];
+x_ref = [10; 100];
 
 % Controller values
 K_v         = 0.8;
-K_a         = 10;
+K_a         = 3;
 K_j         = 100;
 K_omega     = 100;
 
@@ -34,7 +35,7 @@ m           = 1;
 x           = Z2;
 v           = Z2;
 a           = Z2;
-F_thrust    = Z2;
+F_thrust    = Z1;
 theta       = Z1;
 omega       = Z1;
 alpha       = Z1;
@@ -48,9 +49,10 @@ for n = steps
     x0          = x(:, p);
     v0          = v(:, p);
     a0          = a(:, p);
+    F_thrust0   = F_thrust(p);
     theta0      = theta(p);
+    dir0        = [-sin(theta0); cos(theta0)];
     omega0      = omega(p);
-    F_thrust0   = F_thrust(:, p);
 
     % Control
     v_desired = -K_v * (x0 - x_ref);
@@ -60,18 +62,19 @@ for n = steps
     j_desired = -K_j * (a0 - a_desired);
     F_thrust_dot_desired = m * j_desired;
 
-    F_thrust_in = F_thrust0 + F_thrust_dot_desired * dt;
-    F_thrust(:, n) = F_thrust_in;
+    F_thrust_desired = F_thrust0 * dir0 + F_thrust_dot_desired * dt;
+    F_thrust_in = norm(F_thrust_desired);
+    F_thrust(n) = F_thrust_in;
 
-    theta_in    = atan2(-F_thrust_in(1), F_thrust_in(2));
+    theta_desired    = atan2(-F_thrust_desired(1), F_thrust_desired(2));
 
-    omega_in    = -K_omega * (theta0 - theta_in);
+    omega_in    = -K_omega * (theta0 - theta_desired);
     omega_in    = min([omega_in, max_omega]);
     omega_in    = max([omega_in, -max_omega]);
     omega(n)    = omega_in;
 
     % Update state
-    a(:, n) = (F_thrust_in - F_g) / m;
+    a(:, n) = (F_thrust_in * dir0 - F_g) / m;
 
     v(:, n) = v0 + a(:, n) * dt;
 
@@ -112,7 +115,19 @@ plot(t, F_thrust)
 title('F\_th')
 hold off
 
-
 figure
 plot(x(1, :), x(2, :))
 title('path')
+
+return
+
+if(do_animation)
+    limits = [min(x(1, :)), max(x(1, :)), min(x(2, :)), max(x(2, :))];
+    figure
+    for n = 1:num_steps
+        plot(x(1, 1:n), x(2, 1:n))
+        title('path over time')
+        axis(limits)
+        pause(dt)
+    end
+end
