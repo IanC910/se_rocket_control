@@ -25,7 +25,7 @@ x_ref = [100; 100; -1000];
 K_v         = 0.5;
 K_a         = 2;
 K_j         = 40;
-K_omega     = 40;
+K_omega     = 10;
 
 max_omega = 30 / 60 * 2 * pi;
 max_speed = 100;
