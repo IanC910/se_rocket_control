@@ -11,21 +11,21 @@ close all
 % Using ship basis matrix for finding desired rotation
 
 g = 9.8;
-sim_time    = 60;
-dt          = 0.001;
+sim_time    = 20;
+dt          = 0.02;
 
 num_steps   = sim_time / dt;
 steps = 1 : num_steps;
 t = steps * dt;
 
 % Desired Conditions
-x_ref = [100; 100; 1000];
+x_ref = [100; 100; -1000];
 
 % Controller values
 K_v         = 0.5;
 K_a         = 2;
 K_j         = 40;
-K_omega     = 80;
+K_omega     = 40;
 
 max_omega = 30 / 60 * 2 * pi;
 max_speed = 100;
@@ -44,6 +44,7 @@ v               = Z3;
 a               = Z3;
 F_thrust_mag    = Z1;
 B               = zeros(3, 3, num_steps); B(:, :, 1) = [0 0 1; 1 0 0; 0 1 0];
+b1              = Z3;
 omega_s         = Z3;
 
 a(:, 1) = F_g / m;
@@ -99,13 +100,14 @@ for n = steps
     R_pitch = [cos(dtheta_s(2)) 0 sin(dtheta_s(2)); 0 1 0; -sin(dtheta_s(2)) 0 cos(dtheta_s(2))];
     R_yaw = [cos(dtheta_s(3)) -sin(dtheta_s(3)) 0; sin(dtheta_s(3)) cos(dtheta_s(3)) 0; 0 0 1];
     B(:, :, n) = B0 * R_roll * R_pitch * R_yaw;
+    b1(:, n) = B(:, 1, n);
     omega_s(:, n) = omega_in_s;
 end
 
 x_limits = [min(min(min(x))), max(max(max(x)))];
 
 figure
-tiledlayout(7, 1)
+tiledlayout(5, 1)
 
 nexttile
 plot(t, x)
@@ -114,6 +116,10 @@ title('x')
 nexttile
 plot(t, v)
 title('v')
+
+nexttile
+plot(t, b1)
+title('b1')
 
 nexttile
 plot(t, omega_s * 180 / pi)
