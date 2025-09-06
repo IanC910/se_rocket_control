@@ -12,7 +12,7 @@ close all
 
 g = 9.8;
 sim_time    = 60;
-dt          = 0.001;
+dt          = 0.02;
 
 num_steps   = sim_time / dt;
 steps = 1 : num_steps;
@@ -25,7 +25,7 @@ x_ref = [100; 1000];
 K_v         = 0.5;
 K_a         = 2;
 K_j         = 40;
-K_omega     = 80;
+K_omega     = 10;
 
 max_omega   = 30 / 60 * 2 * pi;
 
