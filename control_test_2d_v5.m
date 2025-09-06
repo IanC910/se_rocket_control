@@ -8,6 +8,7 @@ close all
 % Desired thrust is calculated from acceleration feedback controls
 % Thrust input strength is calculated with current angle
 % Velocity is capped
+% Using ship basis matrix for finding desired rotation
 
 g = 9.8;
 sim_time    = 60;
