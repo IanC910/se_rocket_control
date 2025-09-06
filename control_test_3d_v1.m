@@ -19,7 +19,7 @@ steps = 1 : num_steps;
 t = steps * dt;
 
 % Desired Conditions
-x_ref = [100; 1000; 0];
+x_ref = [100; 100; 1000];
 
 % Controller values
 K_v         = 0.5;
@@ -27,7 +27,9 @@ K_a         = 2;
 K_j         = 40;
 K_omega     = 80;
 
-max_omega   = 30 / 60 * 2 * pi;
+max_omega = 30 / 60 * 2 * pi;
+max_speed = 100;
+max_thrust = 100;
 
 % Initial Conditions
 Z1 = zeros(1, num_steps);
@@ -42,7 +44,6 @@ v               = Z3;
 a               = Z3;
 F_thrust_mag    = Z1;
 B               = zeros(3, 3, num_steps); B(:, :, 1) = [0 0 1; 1 0 0; 0 1 0];
-theta           = Z3;
 omega_s         = Z3;
 
 a(:, 1) = F_g / m;
@@ -57,11 +58,10 @@ for n = steps
     a0          = a(:, p);
     F_thrust0   = F_thrust_mag(p);
     B0          = B(:, :, p);
-    % theta0      = theta(p);
 
     % Control
     v_ref_uncapped = -K_v * (x0 - x_ref);
-    v_ref_mag = min(norm(v_ref_uncapped), 100);
+    v_ref_mag = min(norm(v_ref_uncapped), max_speed);
     v_ref = v_ref_mag * v_ref_uncapped / norm(v_ref_uncapped);
 
     a_ref = -K_a * (v0 - v_ref);
@@ -71,7 +71,7 @@ for n = steps
 
     F_thrust_ref = F_thrust0 * B0(:, 1) + F_thrust_dot_ref * dt;
     F_thrust_mag_in_uncapped = dot(F_thrust_ref, B0(:, 1));
-    F_thrust_mag_in = min(max(F_thrust_mag_in_uncapped, 0), 100);
+    F_thrust_mag_in = min(max(F_thrust_mag_in_uncapped, 0), max_thrust);
 
     % Get thrust vector in ship coords
     F_thrust_ref_s = B0 \ F_thrust_ref;
@@ -94,12 +94,11 @@ for n = steps
     x(:, n) = x0 + v0 * dt + 0.5 * a(:, n) * dt * dt;
     F_thrust_mag(n) = F_thrust_mag_in;
 
-    dtheta = omega_in_s * dt;
-    R_roll = [1 0 0; 0 cos(dtheta(1)) -sin(dtheta(1)); 0 sin(dtheta(1)) cos(dtheta(1))];
-    R_pitch = [cos(dtheta(2)) 0 sin(dtheta(2)); 0 1 0; -sin(dtheta(2)) 0 cos(dtheta(2))];
-    R_yaw = [cos(dtheta(3)) -sin(dtheta(3)) 0; sin(dtheta(3)) cos(dtheta(3)) 0; 0 0 1];
+    dtheta_s = omega_in_s * dt;
+    R_roll = [1 0 0; 0 cos(dtheta_s(1)) -sin(dtheta_s(1)); 0 sin(dtheta_s(1)) cos(dtheta_s(1))];
+    R_pitch = [cos(dtheta_s(2)) 0 sin(dtheta_s(2)); 0 1 0; -sin(dtheta_s(2)) 0 cos(dtheta_s(2))];
+    R_yaw = [cos(dtheta_s(3)) -sin(dtheta_s(3)) 0; sin(dtheta_s(3)) cos(dtheta_s(3)) 0; 0 0 1];
     B(:, :, n) = B0 * R_roll * R_pitch * R_yaw;
-    % theta(n) = theta0 + dtheta;
     omega_s(:, n) = omega_in_s;
 end
 
@@ -117,10 +116,6 @@ plot(t, v)
 title('v')
 
 nexttile
-plot(t, theta * 180 / pi)
-title('theta in deg')
-
-nexttile
 plot(t, omega_s * 180 / pi)
 title('omega in deg/s')
 
@@ -130,18 +125,17 @@ title('F\_thrust_mag')
 hold off
 
 
-
-limits = [x_limits, x_limits];
+x_limits2 = [x_limits, x_limits];
+x_limits3 = [x_limits, x_limits, x_limits];
 
 figure
 title('xy path')
 hold on
 for s = 0 : sim_time - 1
     plot(x(1, s/dt + 1: (s + 1)/dt), x(2, s/dt + 1: (s + 1)/dt))
-    axis(limits)
+    axis(x_limits2)
 end
 hold off
-
 
 
 figure
@@ -149,10 +143,9 @@ title('xz path')
 hold on
 for s = 0 : sim_time - 1
     plot(x(1, s/dt + 1: (s + 1)/dt), x(3, s/dt + 1: (s + 1)/dt))
-    axis(limits)
+    axis(x_limits2)
 end
 hold off
-
 
 
 figure
@@ -160,6 +153,11 @@ title('yz path')
 hold on
 for s = 0 : sim_time - 1
     plot(x(2, s/dt + 1: (s + 1)/dt), x(3, s/dt + 1: (s + 1)/dt))
-    axis(limits)
+    axis(x_limits2)
 end
 hold off
+
+figure
+title('path')
+plot3(x(1, :), x(2, :), x(3, :))
+axis(x_limits3);
