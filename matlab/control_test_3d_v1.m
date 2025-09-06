@@ -43,7 +43,7 @@ x               = Z3;
 v               = Z3;
 a               = Z3;
 F_thrust_mag    = Z1;
-B               = zeros(3, 3, num_steps); B(:, :, 1) = [0 0 1; 1 0 0; 0 1 0];
+B               = zeros(3, 3, num_steps); B(:, :, 1) = [0 1 0; 0 0 1; 1 0 0];
 b1              = Z3;
 omega_s         = Z3;
 
