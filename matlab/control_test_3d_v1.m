@@ -43,12 +43,15 @@ x               = Z3;
 v               = Z3;
 a               = Z3;
 F_thrust_mag    = Z1;
-B               = zeros(3, 3, num_steps); B(:, :, 1) = [0 1 0; 0 0 1; 1 0 0];
+B               = zeros(3, 3, num_steps);
 b1              = Z3;
 omega_s         = Z3;
 
 a(:, 1) = F_g / m;
 F_thrust_mag(1) = m * g;
+B(:, 1, 1) = [0; 0; 1];
+B(:, 2, 1) = [1; 0; 0];
+B(:, 3, 1) = [0; 1; 0];
 
 % Start of sim
 
