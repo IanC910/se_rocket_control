@@ -27,31 +27,40 @@ namespace IngameScript
     {
 
 
+        // SETTINGS ===============================================================================
 
+        // Choose between using delta position or world position
+        bool useDeltaPosition = true;
 
+        // Desired Position Delta
+        Vector3D deltaPositionCockpitFrame = new Vector3D(0, 0, 0);
+
+        // Desired World Position
+        Vector3D desiredPosition = new Vector3D(0, 0, 0);
+
+        // Name of refernce cockpit
         string COCKPIT_NAME = "Cockpit";
 
-        double dt;
-
-        double Kv = 0.3;
+        // Feedback Control Gains
+        double Kv = 0.2;
         double Ka = 2;
-        double Kj = 10;
+        double Kj = 12;
         double Komega = 6;
+
+        // END OF SETTTINGS ========================================================================
+
+
+
+        double dt;
 
         double MAX_SPEED = 100;
         double MAX_EFFECTIVE_THRUST = 0; // To be Set programatically
         double MAX_OMEGA = Math.PI;
 
-        bool useDeltaInputs = true;
-        double deltaXShipCoords = 0;
-        double deltaYShipCoords = 0;
-        double deltaZShipCoords = 300;
-
         IMyCockpit cockpit = null;
         List<IMyThrust> forwardThrusters = new List<IMyThrust>();
         List<IMyGyro> gyros = new List<IMyGyro>();
 
-        Vector3D desiredPosition;
         Vector3D velMinus1 = new Vector3D(0, 0, 0);
         Vector3D velMinus2 = new Vector3D(0, 0, 0);
 
@@ -89,11 +98,21 @@ namespace IngameScript
                 gyro.GyroOverride = true;
             }
 
-            if (useDeltaInputs)
+            if (useDeltaPosition)
             {
+                Vector3D cockpitForwardShipFrame = Vector3D.TransformNormal(cockpit.WorldMatrix.Forward, MatrixD.Transpose(cockpit.WorldMatrix));
+                Vector3D cockpitLeftShipFrame = Vector3D.TransformNormal(cockpit.WorldMatrix.Left, MatrixD.Transpose(cockpit.WorldMatrix));
+                Vector3D cockpitUpShipFrame = Vector3D.TransformNormal(cockpit.WorldMatrix.Up, MatrixD.Transpose(cockpit.WorldMatrix));
+
+                // MatrixD idealCockpitMatrix = MatrixD.CreateWorld(Vector3D.Zero, cockpit.WorldMatrix.Forward, cockpit.WorldMatrix.Up);
+
+                Vector3D deltaPositionShipFrame =
+                    deltaPositionCockpitFrame.X * cockpitForwardShipFrame +
+                    deltaPositionCockpitFrame.Y * cockpitLeftShipFrame +
+                    deltaPositionCockpitFrame.Z * cockpitUpShipFrame;
+
                 Vector3D position = cockpit.GetPosition();
-                Vector3D deltaPositionShipCoords = new Vector3D(deltaXShipCoords, deltaYShipCoords, deltaZShipCoords);
-                Vector3D deltaPosition = Vector3D.TransformNormal(deltaPositionShipCoords, cockpit.WorldMatrix);
+                Vector3D deltaPosition = Vector3D.TransformNormal(deltaPositionShipFrame, cockpit.WorldMatrix);
                 desiredPosition = position + deltaPosition;
             }
         }
@@ -111,7 +130,7 @@ namespace IngameScript
             // Get initial values
             Vector3D pos0 = cockpit.GetPosition();
             Vector3D vel0 = cockpit.GetShipVelocities().LinearVelocity;
-            Vector3D acc0 = (3*vel0 - 4*velMinus1 + velMinus2) / (2*dt);
+            Vector3D acc0 = (3 * vel0 - 4 * velMinus1 + velMinus2) / (2 * dt);
             double mass = cockpit.CalculateShipMass().PhysicalMass;
             double thrustForceMag0 = 0;
             foreach (IMyThrust thruster in forwardThrusters)
@@ -151,7 +170,8 @@ namespace IngameScript
             // Set Inputs
             cockpit.DampenersOverride = false;
             float thrustOverridePercentage = (float)(thrustForceMagIn / MAX_EFFECTIVE_THRUST);
-            foreach (IMyThrust thruster in forwardThrusters) {
+            foreach (IMyThrust thruster in forwardThrusters)
+            {
                 thruster.ThrustOverridePercentage = thrustOverridePercentage;
             }
 
