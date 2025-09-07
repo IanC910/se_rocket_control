@@ -100,6 +100,7 @@ namespace IngameScript
 
         public void Save()
         {
+            cockpit.DampenersOverride = true;
         }
 
         // Main called every update period
