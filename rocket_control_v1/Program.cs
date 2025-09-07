@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using System.Xml;
 using VRage;
@@ -24,15 +25,9 @@ namespace IngameScript
 {
     public partial class Program : MyGridProgram
     {
-        // This file contains your actual script.
-        //
-        // You can either keep all your code here, or you can create separate
-        // code files to make your program easier to navigate while coding.
-        //
-        // Go to:
-        // https://github.com/malware-dev/MDK-SE/wiki/Quick-Introduction-to-Space-Engineers-Ingame-Scripts
-        //
-        // to learn more about ingame scripts.
+
+
+
 
         string COCKPIT_NAME = "Cockpit";
 
@@ -50,7 +45,7 @@ namespace IngameScript
         bool useDeltaInputs = true;
         double deltaXShipCoords = 0;
         double deltaYShipCoords = 0;
-        double deltaZShipCoords = 10;
+        double deltaZShipCoords = -100;
 
         IMyCockpit cockpit = null;
         List<IMyThrust> forwardThrusters = new List<IMyThrust>();
@@ -142,8 +137,8 @@ namespace IngameScript
             Vector3D thrustForceRefShipCoords = Vector3D.TransformNormal(thrustForceRef, MatrixD.Transpose(cockpit.WorldMatrix));
 
             // Delta Theta in ship coords
-            Vector3D forwardDirShipCoords = new Vector3D(1, 0, 0);
-            Vector3D deltaThetaTempShipCoords = forwardDirShipCoords.Cross(thrustForceRefShipCoords.Normalized());
+            Vector3D forwardVecShipCoords = Vector3D.TransformNormal(cockpit.WorldMatrix.Forward, MatrixD.Transpose(cockpit.WorldMatrix));
+            Vector3D deltaThetaTempShipCoords = forwardVecShipCoords.Cross(thrustForceRefShipCoords.Normalized());
             double deltaThetaMag = Math.Asin(deltaThetaTempShipCoords.Length());
             Vector3D deltaThetaShipCoords = deltaThetaMag * deltaThetaTempShipCoords.Normalized();
 
@@ -152,6 +147,7 @@ namespace IngameScript
             Vector3D omegaInShipCoords = omegaInMag * omegaInShipCoordsUncapped.Normalized();
 
             // Set Inputs
+            cockpit.DampenersOverride = false;
             float thrustOverridePercentage = (float)(thrustForceMagIn / MAX_EFFECTIVE_THRUST);
             foreach (IMyThrust thruster in forwardThrusters) {
                 thruster.ThrustOverridePercentage = thrustOverridePercentage;
@@ -159,40 +155,21 @@ namespace IngameScript
 
             foreach (IMyGyro gyro in gyros)
             {
-                MyBlockOrientation orientation = gyro.Orientation;
-                orientation.Forward = Base6Directions.Direction.Forward;
-                switch (gyro.Orientation.Forward)
-                {
-                    case Base6Directions.Direction.Forward: gyro.Roll = (float)omegaInShipCoords.X; break;
-                    case Base6Directions.Direction.Backward: gyro.Roll = -(float)omegaInShipCoords.X; break;
-                    case Base6Directions.Direction.Left: gyro.Pitch = (float)omegaInShipCoords.X; break;
-                    case Base6Directions.Direction.Right: gyro.Pitch = -(float)omegaInShipCoords.X; break;
-                    case Base6Directions.Direction.Up: gyro.Yaw = (float)omegaInShipCoords.X; break;
-                    case Base6Directions.Direction.Down: gyro.Yaw = -(float)omegaInShipCoords.X; break;
-                    default: break;
-                }
+                gyro.Roll = -(float)omegaInShipCoords.Z;
+                gyro.Pitch = -(float)omegaInShipCoords.X;
+                gyro.Yaw = -(float)omegaInShipCoords.Y;
 
-                switch (gyro.Orientation.Left)
-                {
-                    case Base6Directions.Direction.Forward: gyro.Roll = (float)omegaInShipCoords.Y; break;
-                    case Base6Directions.Direction.Backward: gyro.Roll = -(float)omegaInShipCoords.Y; break;
-                    case Base6Directions.Direction.Left: gyro.Pitch = (float)omegaInShipCoords.Y; break;
-                    case Base6Directions.Direction.Right: gyro.Pitch = -(float)omegaInShipCoords.Y; break;
-                    case Base6Directions.Direction.Up: gyro.Yaw = (float)omegaInShipCoords.Y; break;
-                    case Base6Directions.Direction.Down: gyro.Yaw = -(float)omegaInShipCoords.Y; break;
-                    default: break;
-                }
 
-                switch (gyro.Orientation.Up)
-                {
-                    case Base6Directions.Direction.Forward: gyro.Roll = (float)omegaInShipCoords.Z; break;
-                    case Base6Directions.Direction.Backward: gyro.Roll = -(float)omegaInShipCoords.Z; break;
-                    case Base6Directions.Direction.Left: gyro.Pitch = (float)omegaInShipCoords.Z; break;
-                    case Base6Directions.Direction.Right: gyro.Pitch = -(float)omegaInShipCoords.Z; break;
-                    case Base6Directions.Direction.Up: gyro.Yaw = (float)omegaInShipCoords.Z; break;
-                    case Base6Directions.Direction.Down: gyro.Yaw = -(float)omegaInShipCoords.Z; break;
-                    default: break;
-                }
+                // switch (gyro.Orientation.Forward)
+                // {
+                //     case Base6Directions.Direction.Forward:
+                //     case Base6Directions.Direction.Backward:
+                //     case Base6Directions.Direction.Left:
+                //     case Base6Directions.Direction.Right:
+                //     case Base6Directions.Direction.Up:
+                //     case Base6Directions.Direction.Down:
+                //     default: break;
+                // }
             }
 
             // Set vars for next loop
