@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "rocket_control_v1", "rocket_control_v1.csproj", "{2E173287-DB99-6DF8-043E-92D400823D03}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2E173287-DB99-6DF8-043E-92D400823D03}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E173287-DB99-6DF8-043E-92D400823D03}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E173287-DB99-6DF8-043E-92D400823D03}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E173287-DB99-6DF8-043E-92D400823D03}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BCE20EBB-1997-4F67-B4CB-E5DB8A40C1E0}
+	EndGlobalSection
+EndGlobal
