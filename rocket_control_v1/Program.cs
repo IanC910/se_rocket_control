@@ -33,10 +33,10 @@ namespace IngameScript
 
         double dt;
 
-        double Kv = 0.5;
+        double Kv = 0.3;
         double Ka = 2;
-        double Kj = 40;
-        double Komega = 20;
+        double Kj = 10;
+        double Komega = 6;
 
         double MAX_SPEED = 100;
         double MAX_EFFECTIVE_THRUST = 0; // To be Set programatically
@@ -45,7 +45,7 @@ namespace IngameScript
         bool useDeltaInputs = true;
         double deltaXShipCoords = 0;
         double deltaYShipCoords = 0;
-        double deltaZShipCoords = -100;
+        double deltaZShipCoords = 300;
 
         IMyCockpit cockpit = null;
         List<IMyThrust> forwardThrusters = new List<IMyThrust>();
@@ -53,6 +53,7 @@ namespace IngameScript
 
         Vector3D desiredPosition;
         Vector3D velMinus1 = new Vector3D(0, 0, 0);
+        Vector3D velMinus2 = new Vector3D(0, 0, 0);
 
         // Constructor
         public Program()
@@ -109,7 +110,7 @@ namespace IngameScript
             // Get initial values
             Vector3D pos0 = cockpit.GetPosition();
             Vector3D vel0 = cockpit.GetShipVelocities().LinearVelocity;
-            Vector3D acc0 = (vel0 - velMinus1) / dt;
+            Vector3D acc0 = (3*vel0 - 4*velMinus1 + velMinus2) / (2*dt);
             double mass = cockpit.CalculateShipMass().PhysicalMass;
             double thrustForceMag0 = 0;
             foreach (IMyThrust thruster in forwardThrusters)
@@ -173,6 +174,7 @@ namespace IngameScript
             }
 
             // Set vars for next loop
+            velMinus2 = velMinus1;
             velMinus1 = vel0;
         }
     }
