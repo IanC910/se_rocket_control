@@ -68,7 +68,18 @@ namespace IngameScript
             cockpit = (IMyCockpit)GridTerminalSystem.GetBlockWithName(COCKPIT_NAME);
 
             // Get forward thrusters
-            GridTerminalSystem.GetBlocksOfType(forwardThrusters, (thruster) => thruster.Orientation == cockpit.Orientation);
+            Base6Directions.Direction thrusterDirection = Base6Directions.Direction.Forward;
+            switch (cockpit.Orientation.Forward)
+            {
+                case Base6Directions.Direction.Forward: thrusterDirection = Base6Directions.Direction.Backward; break;
+                case Base6Directions.Direction.Backward: thrusterDirection = Base6Directions.Direction.Forward; break;
+                case Base6Directions.Direction.Left: thrusterDirection = Base6Directions.Direction.Right; break;
+                case Base6Directions.Direction.Right: thrusterDirection = Base6Directions.Direction.Left; break;
+                case Base6Directions.Direction.Up: thrusterDirection = Base6Directions.Direction.Down; break;
+                case Base6Directions.Direction.Down: thrusterDirection = Base6Directions.Direction.Up; break;
+                default: break;
+            }
+            GridTerminalSystem.GetBlocksOfType(forwardThrusters, (thruster) => thruster.Orientation.Forward == thrusterDirection);
             MAX_EFFECTIVE_THRUST = 0;
             foreach (IMyThrust thruster in forwardThrusters)
             {
@@ -127,6 +138,7 @@ namespace IngameScript
 
             // Gyro Controller
             // Get thrust vector in ship coords
+            // thrustForceRefShipCoords = cockPit.WorldMatrix.inverse * thrustForceRef
             Vector3D thrustForceRefShipCoords = Vector3D.TransformNormal(thrustForceRef, MatrixD.Transpose(cockpit.WorldMatrix));
 
             // Delta Theta in ship coords
@@ -145,67 +157,46 @@ namespace IngameScript
                 thruster.ThrustOverridePercentage = thrustOverridePercentage;
             }
 
-            foreach (IMyGyro gyro in gyros) {
-                gyro.GyroOverride = true;
+            foreach (IMyGyro gyro in gyros)
+            {
+                MyBlockOrientation orientation = gyro.Orientation;
+                orientation.Forward = Base6Directions.Direction.Forward;
+                switch (gyro.Orientation.Forward)
+                {
+                    case Base6Directions.Direction.Forward: gyro.Roll = (float)omegaInShipCoords.X; break;
+                    case Base6Directions.Direction.Backward: gyro.Roll = -(float)omegaInShipCoords.X; break;
+                    case Base6Directions.Direction.Left: gyro.Pitch = (float)omegaInShipCoords.X; break;
+                    case Base6Directions.Direction.Right: gyro.Pitch = -(float)omegaInShipCoords.X; break;
+                    case Base6Directions.Direction.Up: gyro.Yaw = (float)omegaInShipCoords.X; break;
+                    case Base6Directions.Direction.Down: gyro.Yaw = -(float)omegaInShipCoords.X; break;
+                    default: break;
+                }
+
+                switch (gyro.Orientation.Left)
+                {
+                    case Base6Directions.Direction.Forward: gyro.Roll = (float)omegaInShipCoords.Y; break;
+                    case Base6Directions.Direction.Backward: gyro.Roll = -(float)omegaInShipCoords.Y; break;
+                    case Base6Directions.Direction.Left: gyro.Pitch = (float)omegaInShipCoords.Y; break;
+                    case Base6Directions.Direction.Right: gyro.Pitch = -(float)omegaInShipCoords.Y; break;
+                    case Base6Directions.Direction.Up: gyro.Yaw = (float)omegaInShipCoords.Y; break;
+                    case Base6Directions.Direction.Down: gyro.Yaw = -(float)omegaInShipCoords.Y; break;
+                    default: break;
+                }
+
+                switch (gyro.Orientation.Up)
+                {
+                    case Base6Directions.Direction.Forward: gyro.Roll = (float)omegaInShipCoords.Z; break;
+                    case Base6Directions.Direction.Backward: gyro.Roll = -(float)omegaInShipCoords.Z; break;
+                    case Base6Directions.Direction.Left: gyro.Pitch = (float)omegaInShipCoords.Z; break;
+                    case Base6Directions.Direction.Right: gyro.Pitch = -(float)omegaInShipCoords.Z; break;
+                    case Base6Directions.Direction.Up: gyro.Yaw = (float)omegaInShipCoords.Z; break;
+                    case Base6Directions.Direction.Down: gyro.Yaw = -(float)omegaInShipCoords.Z; break;
+                    default: break;
+                }
             }
 
-
-
-
-
+            // Set vars for next loop
             velMinus1 = vel0;
         }
     }
-
-    // for n = steps
-    //     p           = max([n - 1, 1]);
-    //     x0          = x(:, p);
-    //     v0          = v(:, p);
-    //     a0          = a(:, p);
-    //     F_thrust0   = F_thrust_mag(p);
-    //     B0          = B(:, :, p);
-
-    //     % Control
-    //     v_ref_uncapped = -K_v * (x0 - x_ref);
-    //     v_ref_mag = min(norm(v_ref_uncapped), max_speed);
-    //     v_ref = v_ref_mag * v_ref_uncapped / norm(v_ref_uncapped);
-
-    //     a_ref = -K_a * (v0 - v_ref);
-
-    //     j_ref = -K_j * (a0 - a_ref);
-    //     F_thrust_dot_ref = m * j_ref;
-
-    //     F_thrust_ref = F_thrust0 * B0(:, 1) + F_thrust_dot_ref * dt;
-    //     F_thrust_mag_in_uncapped = dot(F_thrust_ref, B0(:, 1));
-    //     F_thrust_mag_in = min(max(F_thrust_mag_in_uncapped, 0), max_thrust);
-
-    //     % Get thrust vector in ship coords
-    //     F_thrust_ref_s = B0 \ F_thrust_ref;
-    //     F_thrust_ref_dir_s = F_thrust_ref_s / norm(F_thrust_ref_s);
-    //     b_1_s = [1; 0; 0]; % Forward direction in ship coords
-
-    //     % Delta theta in ship coords
-    //     delta_theta_temp_s = cross(b_1_s, F_thrust_ref_dir_s);
-    //     delta_theta_mag = asin(norm(delta_theta_temp_s));
-    //     delta_theta_s = delta_theta_mag * delta_theta_temp_s / norm(delta_theta_temp_s);
-
-    //     omega_in_uncapped_s = K_omega * delta_theta_s;
-    //     omega_in_mag = min(norm(omega_in_uncapped_s), max_omega);
-    //     omega_in_s = omega_in_mag * omega_in_uncapped_s / norm(omega_in_uncapped_s);
-
-    //     % Update state
-    //     F_net   = F_thrust_mag_in * B0(:, 1) + F_g;
-    //     a(:, n) = F_net / m;
-    //     v(:, n) = v0 + a(:, n) * dt;
-    //     x(:, n) = x0 + v0 * dt + 0.5 * a(:, n) * dt * dt;
-    //     F_thrust_mag(n) = F_thrust_mag_in;
-
-    //     dtheta_s = omega_in_s * dt;
-    //     R_roll = [1 0 0; 0 cos(dtheta_s(1)) -sin(dtheta_s(1)); 0 sin(dtheta_s(1)) cos(dtheta_s(1))];
-    //     R_pitch = [cos(dtheta_s(2)) 0 sin(dtheta_s(2)); 0 1 0; -sin(dtheta_s(2)) 0 cos(dtheta_s(2))];
-    //     R_yaw = [cos(dtheta_s(3)) -sin(dtheta_s(3)) 0; sin(dtheta_s(3)) cos(dtheta_s(3)) 0; 0 0 1];
-    //     B(:, :, n) = B0 * R_roll * R_pitch * R_yaw;
-    //     b1(:, n) = B(:, 1, n);
-    //     omega_s(:, n) = omega_in_s;
-    // end
 }
