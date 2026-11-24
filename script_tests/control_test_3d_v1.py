@@ -36,7 +36,7 @@ vel             = np.zeros((num_steps, 3))
 acc             = np.zeros((num_steps, 3))
 F_thrust_mag    = np.zeros(num_steps)
 ship_frame      = np.zeros((num_steps, 3, 3))
-forward              = np.zeros((num_steps, 3))
+forward         = np.zeros((num_steps, 3))
 omega_s         = np.zeros((num_steps, 3))
 
 ship_frame[0] = np.array([[0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0]])
@@ -52,9 +52,11 @@ for n in range(num_steps):
     F_thrust_mag0   = F_thrust_mag[p]
 
     # Control
-    v_ref_uncapped = gain_vel * (x_ref - pos0)
+    delta_pos = x_ref - pos0
+    v_ref_uncapped = gain_vel * delta_pos
     v_ref_mag = clamp(np.linalg.norm(v_ref_uncapped), 0.0, max_speed)
-    v_ref = v_ref_mag * v_ref_uncapped / np.linalg.norm(v_ref_uncapped) if np.linalg.norm(v_ref_uncapped) > 0 else np.zeros(3)
+    v_ref_dir = v_ref_uncapped / np.linalg.norm(v_ref_uncapped) if np.linalg.norm(v_ref_uncapped) > 0 else np.zeros(3)
+    v_ref = v_ref_mag * v_ref_dir
 
     a_ref = gain_acc * (v_ref - vel0)
 
