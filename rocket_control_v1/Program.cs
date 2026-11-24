@@ -42,16 +42,18 @@ namespace IngameScript
         string COCKPIT_NAME = "Cockpit";
 
         // Feedback Control Gains
-        double Kv = 0.2;
-        double Ka = 2;
-        double Kj = 12;
-        double Komega = 6;
+        double gainVel      = 0.2;
+        double gainAcc      = 2;
+        double gainJerk     = 12;
+        double gainOmega = 6;
+
+        int velocityControlMode = 0;
 
         // END OF SETTTINGS ========================================================================
 
 
 
-        double dt;
+        double timeStepS;
 
         double MAX_SPEED = 100;
         double MAX_EFFECTIVE_THRUST = 0; // To be Set programatically
@@ -125,12 +127,12 @@ namespace IngameScript
         // Main called every update period
         public void Main(string argument, UpdateType updateSource)
         {
-            dt = (Runtime.LastRunTimeMs + Runtime.TimeSinceLastRun.Milliseconds) / 1000;
+            timeStepS = (Runtime.LastRunTimeMs + Runtime.TimeSinceLastRun.Milliseconds) / 1000;
 
             // Get initial values
             Vector3D pos0 = cockpit.GetPosition();
             Vector3D vel0 = cockpit.GetShipVelocities().LinearVelocity;
-            Vector3D acc0 = (3 * vel0 - 4 * velMinus1 + velMinus2) / (2 * dt);
+            Vector3D acc0 = (3 * vel0 - 4 * velMinus1 + velMinus2) / (2 * timeStepS);
             double mass = cockpit.CalculateShipMass().PhysicalMass;
             double thrustForceMag0 = 0;
             foreach (IMyThrust thruster in forwardThrusters)
@@ -140,15 +142,34 @@ namespace IngameScript
             Vector3D thrustForce0 = thrustForceMag0 * cockpit.WorldMatrix.Forward;
 
             // Thrust Vector Controller
-            Vector3D velocityRefUncapped = -Kv * (pos0 - desiredPosition);
+            Vector3D deltaPos = desiredPosition - pos0;
+            Vector3D velocityRefUncapped;
+
+            if (velocityControlMode == 0)
+            {
+                velocityRefUncapped = gainVel * deltaPos;
+            }
+            else if (velocityControlMode == 1)
+            {
+                double max_upward_acc = MAX_EFFECTIVE_THRUST / mass - 9.81;
+                double gainVelWithMaxAccCalc = gainVel * Math.Sqrt(2 * max_upward_acc);
+                velocityRefUncapped.X = gainVelWithMaxAccCalc * Math.Sign(deltaPos.X) * Math.Sqrt(Math.Abs(deltaPos.X));
+                velocityRefUncapped.Y = gainVelWithMaxAccCalc * Math.Sign(deltaPos.Y) * Math.Sqrt(Math.Abs(deltaPos.Y));
+                velocityRefUncapped.Z = gainVelWithMaxAccCalc * Math.Sign(deltaPos.Z) * Math.Sqrt(Math.Abs(deltaPos.Z));
+            }
+            else
+            {
+                velocityRefUncapped = new Vector3D(0, 0, 0);
+            }
+            
             double velocityRefMag = Math.Min(velocityRefUncapped.Length(), MAX_SPEED);
             Vector3D velocityRef = velocityRefMag * velocityRefUncapped.Normalized();
 
-            Vector3D accelRef = -Ka * (vel0 - velocityRef);
-            Vector3D jerkRef = -Kj * (acc0 - accelRef);
+            Vector3D accelRef = gainAcc * (velocityRef - vel0);
+            Vector3D jerkRef = gainJerk * (accelRef - acc0);
             Vector3D thrustForceDotRef = mass * jerkRef;
 
-            Vector3D thrustForceRef = thrustForce0 + thrustForceDotRef * dt;
+            Vector3D thrustForceRef = thrustForce0 + thrustForceDotRef * timeStepS;
             double thrustForceMagInUncapped = thrustForceRef.Dot(cockpit.WorldMatrix.Forward);
             double thrustForceMagIn = Math.Min(Math.Max(thrustForceMagInUncapped, 0), MAX_EFFECTIVE_THRUST);
 
@@ -163,7 +184,7 @@ namespace IngameScript
             double deltaThetaMag = Math.Asin(deltaThetaTempShipCoords.Length());
             Vector3D deltaThetaShipCoords = deltaThetaMag * deltaThetaTempShipCoords.Normalized();
 
-            Vector3D omegaInShipCoordsUncapped = Komega * deltaThetaShipCoords;
+            Vector3D omegaInShipCoordsUncapped = gainOmega * deltaThetaShipCoords;
             double omegaInMag = Math.Min(omegaInShipCoordsUncapped.Length(), MAX_OMEGA);
             Vector3D omegaInShipCoords = omegaInMag * omegaInShipCoordsUncapped.Normalized();
 

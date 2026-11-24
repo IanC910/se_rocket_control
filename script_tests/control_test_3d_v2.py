@@ -8,13 +8,14 @@ def clamp(value, low, high):
 # Desired position
 x_ref = np.array([100.0, 100.0, -1000.0])
 
-# Ship properties
-mass_kg = 1.0
-max_thrust_N = 100.0
-
 # World constants
 earth_grav_acc  = 9.8
 max_speed       = 100
+
+# Ship properties
+mass_kg = 1.0
+max_thrust_N = 100.0
+max_upward_acc = max_thrust_N / mass_kg - earth_grav_acc
 
 # Sim constants
 sim_time        = 20.0
@@ -23,9 +24,9 @@ num_steps       = int(sim_time / time_step)
 time            = (np.arange(num_steps) + 1) * time_step
 
 # Controller constants
-gain_vel    = 0.5
+gain_vel    = 0.22 * math.sqrt(2 * max_upward_acc)
 gain_acc    = 2.0
-gain_jerk   = 40.0
+gain_jerk   = 40
 gain_omega  = 10.0
 max_omega   = 30 / 60 * 2 * math.pi
 
@@ -36,7 +37,7 @@ vel             = np.zeros((num_steps, 3))
 acc             = np.zeros((num_steps, 3))
 F_thrust_mag    = np.zeros(num_steps)
 ship_frame      = np.zeros((num_steps, 3, 3))
-forward              = np.zeros((num_steps, 3))
+forward         = np.zeros((num_steps, 3))
 omega_s         = np.zeros((num_steps, 3))
 
 ship_frame[0] = np.array([[0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0]])
@@ -51,13 +52,17 @@ for n in range(num_steps):
     ship_frame0     = ship_frame[p]
     F_thrust_mag0   = F_thrust_mag[p]
 
-    # Control
-    v_ref_uncapped = gain_vel * (x_ref - pos0)
+    # Velocity Control
+    delta_pos = x_ref - pos0
+    v_ref_uncapped = np.sign(delta_pos) * gain_vel * np.sqrt(np.abs(delta_pos))
     v_ref_mag = clamp(np.linalg.norm(v_ref_uncapped), 0.0, max_speed)
-    v_ref = v_ref_mag * v_ref_uncapped / np.linalg.norm(v_ref_uncapped) if np.linalg.norm(v_ref_uncapped) > 0 else np.zeros(3)
+    v_ref_dir = v_ref_uncapped / np.linalg.norm(v_ref_uncapped) if np.linalg.norm(v_ref_uncapped) > 0 else np.zeros(3)
+    v_ref = v_ref_mag * v_ref_dir
 
+    # Acceleration Control
     a_ref = gain_acc * (v_ref - vel0)
 
+    # Jerk and Thrust Change Control
     j_ref = gain_jerk * (a_ref - acc0)
     F_thrust_prime_ideal = mass_kg * j_ref
 
